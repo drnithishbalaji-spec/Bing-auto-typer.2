@@ -1,0 +1,184 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bing Automator - Secure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes blink { 50% { opacity: 0; } }
+        .cursor { border-right: 3px solid #3b82f6; animation: blink 0.7s infinite; }
+        .tab-active { 
+            background-color: #3b82f6 !important; 
+            color: white !important; 
+            border-color: #60a5fa !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .terminal-bg { background-color: #0f172a; }
+        .safari-radius { border-radius: 2rem; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 font-sans text-slate-900">
+
+    <div class="bg-white w-full max-w-md safari-radius shadow-2xl overflow-hidden border border-white">
+        
+        <!-- Header -->
+        <div class="bg-slate-900 p-8 text-white text-center relative">
+            <div id="statusDot" class="absolute top-6 right-6 flex items-center space-x-2 opacity-0 transition-opacity">
+                <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-blue-400">Locked</span>
+            </div>
+            
+            <svg class="w-12 h-12 mx-auto mb-4" viewBox="0 0 100 100">
+                <rect x="10" y="10" width="80" height="80" rx="20" fill="#3b82f6"/>
+                <path d="M50 30L38 55H54L42 75" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1 class="text-xl font-black tracking-tight">SECURITY ACCESS</h1>
+            <p id="headerSub" class="text-slate-400 text-xs mt-1">Enter Authorization Pin</p>
+        </div>
+
+        <div class="p-8 space-y-6">
+            
+            <!-- Authorization View -->
+            <div id="authView" class="space-y-4">
+                <div class="flex justify-center space-x-3">
+                    <input type="password" maxlength="4" id="pinInput" placeholder="0000" 
+                        class="w-full text-center bg-slate-100 border-2 border-transparent focus:border-blue-500 rounded-2xl py-5 text-3xl font-black tracking-[1em] outline-none transition-all">
+                </div>
+                <p class="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">Only Code 1045 Will Work</p>
+            </div>
+
+            <!-- Terminal Loop View (Hidden initially) -->
+            <div id="loopView" class="hidden space-y-6 animate-in fade-in duration-500">
+                <div class="terminal-bg rounded-[1.5rem] p-6 min-h-[160px] relative border border-slate-800">
+                    <div class="font-mono text-sm text-blue-500 mb-4 opacity-50 font-bold tracking-tighter">AUTOMATION_LOG_v2.0</div>
+                    
+                    <div class="font-mono text-xl text-white">
+                        <span class="text-slate-500">></span> <span id="displayWord"></span><span class="cursor"></span>
+                    </div>
+
+                    <div class="absolute bottom-5 right-6 flex space-x-2">
+                        <div id="tab1" class="text-[9px] font-black text-slate-500 border border-slate-700 px-3 py-1.5 rounded-lg transition-all">TAB</div>
+                        <div id="tab2" class="text-[9px] font-black text-slate-500 border border-slate-700 px-3 py-1.5 rounded-lg transition-all">TAB</div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <a id="searchLink" href="#" target="_blank" class="block w-full bg-blue-600 text-white text-center py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95">
+                        Open New Search
+                    </a>
+                    <button id="toggleBtn" class="w-full bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-xs hover:bg-red-50 hover:text-red-600 transition-all uppercase tracking-widest">
+                        Pause Loop
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Footer -->
+        <div class="bg-slate-50 p-4 border-t border-slate-100 text-center">
+            <span id="systemStatus" class="text-[9px] font-bold text-slate-300 uppercase tracking-[0.2em]">System Standby</span>
+        </div>
+    </div>
+
+    <script>
+        const wordBank = ["Quantum", "Encryption", "Architecture", "Atmosphere", "Velocity", "Synthesis", "Database", "Protocol", "Framework", "Metadata"];
+        
+        let loopActive = false;
+        const correctCode = "1045";
+
+        const pinInput = document.getElementById('pinInput');
+        const authView = document.getElementById('authView');
+        const loopView = document.getElementById('loopView');
+        const displayWord = document.getElementById('displayWord');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const searchLink = document.getElementById('searchLink');
+        const statusDot = document.getElementById('statusDot');
+        const headerSub = document.getElementById('headerSub');
+        const systemStatus = document.getElementById('systemStatus');
+        const tab1 = document.getElementById('tab1');
+        const tab2 = document.getElementById('tab2');
+
+        pinInput.addEventListener('input', (e) => {
+            if (e.target.value === correctCode) {
+                unlockSystem();
+            } else if (e.target.value.length === 4) {
+                // Shake effect for wrong code
+                pinInput.classList.add('border-red-500', 'animate-bounce');
+                setTimeout(() => {
+                    pinInput.classList.remove('border-red-500', 'animate-bounce');
+                    pinInput.value = '';
+                }, 500);
+            }
+        });
+
+        function unlockSystem() {
+            authView.classList.add('hidden');
+            loopView.classList.remove('hidden');
+            statusDot.style.opacity = "1";
+            headerSub.innerText = "ACCESS GRANTED";
+            headerSub.classList.replace('text-slate-400', 'text-blue-400');
+            systemStatus.innerText = "Automation Running";
+            systemStatus.classList.replace('text-slate-300', 'text-blue-400');
+            loopActive = true;
+            runCycle();
+        }
+
+        toggleBtn.onclick = () => {
+            if (loopActive) {
+                loopActive = false;
+                toggleBtn.innerText = "Resume Loop";
+                toggleBtn.classList.replace('bg-slate-100', 'bg-green-50');
+                toggleBtn.classList.replace('text-slate-500', 'text-green-600');
+                displayWord.innerText = "[PAUSED]";
+                systemStatus.innerText = "Automation Paused";
+            } else {
+                loopActive = true;
+                toggleBtn.innerText = "Pause Loop";
+                toggleBtn.classList.replace('bg-green-50', 'bg-slate-100');
+                toggleBtn.classList.replace('text-green-600', 'text-slate-500');
+                systemStatus.innerText = "Automation Running";
+                runCycle();
+            }
+        };
+
+        async function runCycle() {
+            if (!loopActive) return;
+
+            // Reset UI for new cycle
+            tab1.classList.remove('tab-active');
+            tab2.classList.remove('tab-active');
+            displayWord.innerText = "";
+            
+            // 1. Typing Logic
+            const target = wordBank[Math.floor(Math.random() * wordBank.length)];
+            for (let char of target) {
+                if (!loopActive) return;
+                displayWord.innerText += char;
+                await new Promise(r => setTimeout(r, 80));
+            }
+
+            // 2. Tab Sequence
+            await new Promise(r => setTimeout(r, 400));
+            if (!loopActive) return;
+            tab1.classList.add('tab-active');
+            
+            await new Promise(r => setTimeout(r, 400));
+            if (!loopActive) return;
+            tab2.classList.add('tab-active');
+
+            // 3. Prepare Next Search
+            const query = target + " " + Math.floor(Math.random() * 1000);
+            searchLink.href = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+            
+            // Wait 5 seconds before repeating the visual typing loop
+            await new Promise(r => setTimeout(r, 5000));
+            runCycle();
+        }
+    </script>
+</body>
+</html>
+
+```
