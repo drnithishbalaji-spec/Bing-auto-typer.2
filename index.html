@@ -1,0 +1,178 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bing Auto-Typer Loop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes blink { 50% { opacity: 0; } }
+        .cursor { border-right: 3px solid #0078d4; animation: blink 0.7s infinite; }
+        .tab-flash { animation: flash 0.4s ease-out; }
+        @keyframes flash {
+            0% { background-color: #3b82f6; color: white; transform: scale(1.1); }
+            100% { background-color: transparent; transform: scale(1); }
+        }
+        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 font-sans text-slate-900">
+
+    <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+        
+        <!-- Branding Header -->
+        <div class="bg-slate-900 p-8 text-white text-center relative">
+            <div id="statusIndicator" class="absolute top-4 right-4 flex items-center space-x-2 opacity-0 transition-opacity">
+                <span class="w-2 h-2 rounded-full bg-green-500 status-pulse"></span>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-green-500">Active</span>
+            </div>
+            
+            <svg class="w-12 h-12 mx-auto mb-3" viewBox="0 0 100 100">
+                <rect x="10" y="10" width="80" height="80" rx="20" fill="#0078d4"/>
+                <path d="M50 30L38 55H54L42 75" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1 class="text-xl font-black tracking-tight">AUTO-TYPER <span class="text-blue-400">PRO</span></h1>
+        </div>
+
+        <div class="p-8 space-y-6">
+            <!-- Initial Trigger -->
+            <div id="setupView" class="space-y-4">
+                <p class="text-center text-slate-400 text-sm font-medium">Type <span class="text-slate-900 font-bold">"hi"</span> to initialize loop</p>
+                <input type="text" id="triggerInput" placeholder="Waiting for command..." 
+                    class="w-full bg-slate-100 border-none rounded-2xl p-4 text-center font-mono text-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+
+            <!-- Terminal Loop View -->
+            <div id="loopView" class="hidden space-y-6">
+                <div class="bg-slate-900 rounded-3xl p-6 min-h-[140px] relative">
+                    <div class="flex space-x-2 mb-4">
+                        <div class="w-2 h-2 rounded-full bg-red-500/50"></div>
+                        <div class="w-2 h-2 rounded-full bg-amber-500/50"></div>
+                        <div class="w-2 h-2 rounded-full bg-green-500/50"></div>
+                    </div>
+                    
+                    <div class="font-mono text-xl text-white">
+                        <span class="text-blue-400">$</span> <span id="displayWord" class="text-white"></span><span class="cursor"></span>
+                    </div>
+
+                    <div class="absolute bottom-4 right-6 flex space-x-3">
+                        <div id="tab1" class="text-[10px] font-bold text-slate-600 border border-slate-700 px-2 py-1 rounded">TAB</div>
+                        <div id="tab2" class="text-[10px] font-bold text-slate-600 border border-slate-700 px-2 py-1 rounded">TAB</div>
+                    </div>
+                </div>
+
+                <!-- Control Center -->
+                <div class="space-y-3">
+                    <a id="searchLink" href="#" target="_blank" class="block w-full bg-blue-600 text-white text-center py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95">
+                        Open Next Search
+                    </a>
+                    <button id="toggleBtn" class="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold text-sm hover:bg-red-50 hover:text-red-600 transition-all">
+                        Stop Automation
+                    </button>
+                </div>
+                
+                <p class="text-[10px] text-center text-slate-300 font-bold uppercase tracking-widest">Auto-Looping Enabled</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wordBank = ["Artificial", "Intelligence", "Hyperlink", "Protocol", "Framework", "Metadata", "Encryption", "Browser", "Safari", "Cloud", "Hardware", "Graphics", "Bandwidth", "Processor", "Syntax"];
+        
+        let isRunning = false;
+        let loopActive = false;
+
+        const triggerInput = document.getElementById('triggerInput');
+        const setupView = document.getElementById('setupView');
+        const loopView = document.getElementById('loopView');
+        const displayWord = document.getElementById('displayWord');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const searchLink = document.getElementById('searchLink');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const tab1 = document.getElementById('tab1');
+        const tab2 = document.getElementById('tab2');
+
+        triggerInput.addEventListener('input', (e) => {
+            if (e.target.value.toLowerCase() === 'hi') {
+                startLoop();
+            }
+        });
+
+        toggleBtn.onclick = () => {
+            if (loopActive) {
+                stopLoop();
+            } else {
+                resumeLoop();
+            }
+        };
+
+        function startLoop() {
+            setupView.classList.add('hidden');
+            loopView.classList.remove('hidden');
+            statusIndicator.style.opacity = "1";
+            loopActive = true;
+            runCycle();
+        }
+
+        function stopLoop() {
+            loopActive = false;
+            statusIndicator.style.opacity = "0";
+            toggleBtn.innerText = "Resume Automation";
+            toggleBtn.className = "w-full bg-green-50 text-green-600 py-4 rounded-2xl font-bold text-sm hover:bg-green-100 transition-all";
+            displayWord.innerText = "...Paused...";
+        }
+
+        function resumeLoop() {
+            loopActive = true;
+            statusIndicator.style.opacity = "1";
+            toggleBtn.innerText = "Stop Automation";
+            toggleBtn.className = "w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold text-sm hover:bg-red-50 hover:text-red-600 transition-all";
+            runCycle();
+        }
+
+        async function runCycle() {
+            if (!loopActive) return;
+
+            // Reset UI
+            tab1.className = "text-[10px] font-bold text-slate-600 border border-slate-700 px-2 py-1 rounded";
+            tab2.className = "text-[10px] font-bold text-slate-600 border border-slate-700 px-2 py-1 rounded";
+            displayWord.innerText = "";
+            
+            // 1. Typing Phase
+            const targetWord = wordBank[Math.floor(Math.random() * wordBank.length)];
+            for (let char of targetWord) {
+                if (!loopActive) return;
+                displayWord.innerText += char;
+                await sleep(80);
+            }
+
+            // 2. Tab Sequence
+            await sleep(400);
+            if (!loopActive) return;
+            tab1.classList.add('tab-flash');
+            
+            await sleep(400);
+            if (!loopActive) return;
+            tab2.classList.add('tab-flash');
+
+            // 3. Prepare Link
+            const query = targetWord + " " + Math.floor(Math.random() * 1000);
+            searchLink.href = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+            
+            // In a real loop, you usually wait for the user to click the search 
+            // before starting the next typing sequence, or you wait a delay.
+            // We will wait 5 seconds before restarting the visual loop.
+            await sleep(5000);
+            runCycle();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
+
+```
